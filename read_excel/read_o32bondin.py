@@ -5,9 +5,11 @@ import pandas as pd
 import datetime
 import sqlite3 as lite
 from pandas.io import sql
+'''
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
+'''
 
 
 #获取前一自然日格式,每周一或者节假日后记得修改n
@@ -57,7 +59,7 @@ def compare_data(db_path,exectCmd):
     return df
 
 def read_file(file_path):
-    script_file = open(file_path,'r')
+    script_file = open(file_path,'r',encoding='UTF-8')
     script_text = script_file.read()
     script_file.close()
     return script_text
@@ -98,6 +100,31 @@ def fill_valuse(data=pd.DataFrame(),*args,**kwargs):
     data.ix[:, 2:4] = data.ix[:, 2:4].fillna(method='pad')
     '''
     return data
+
+def add_sheet(self,end_file,*args):
+    import xlrd
+    import xlsxwriter
+    from merger_excel_xls import merger_excel
+    # 定义要合并的excel文件列表
+    allxls = args
+    # 存储所有读取的结果
+    datavalue = []
+    for fl in allxls:
+        fh = merger_excel.open_xls(fl)
+        x = merger_excel.getshnum(fh)
+        for shnum in range(x):
+            print("正在读取文件：" + str(fl) + "的第" + str(shnum) + "个sheet表的内容...")
+            rvalue = merger_excel.getFilect(fl, shnum)  # 定义最终合并后生成的新文件
+    wb1 = xlsxwriter.Workbook(endfile)
+    # 创建一个sheet工作对象
+    ws = wb1.add_worksheet()
+    for a in range(len(rvalue)):
+        for b in range(len(rvalue[a])):
+            c = rvalue[a][b]
+            ws.write(a, b, c)
+    wb1.close()
+
+
 #调试
 if __name__ == '__main__':
 
@@ -117,8 +144,52 @@ if __name__ == '__main__':
     rows = compare_data(db_path, sql_text)
     #print pd.DataFrame(rows[:,1:2], dtype='object')  # 示例1
 
-    print rows.head(50)
-    print rows.dtypes
-    rows.to_csv('compare_result.csv' ,encoding='gb2312')
+    #print (rows.head(1))
+    #print (rows.dtypes)
+    #rows.to_csv('excel/compare_result.csv' ,encoding='gb2312')
+    rows.to_excel('excel/compare_result.xls', encoding='gb2312')
+
+    day = get_lastday()
+    allxls = ['excel/compare_result.xls','excel/compare_r.xls']
+    endfile = 'excel/compare_result'+ day +'.xls'
+
+    import xlsxwriter
+    import sys
+    #sys.path.append('merger_excel_')
+    from merger_excel_xls import merger_excel
+    wb1 = xlsxwriter.Workbook(endfile)
+    # 创建一个sheet工作对象
+    ws = wb1.add_worksheet()
+
+    datavalue = []
+    for fl in allxls:
+        fh = merger_excel.open_xls(fl)
+        x = merger_excel.getshnum(fh)
+        for shnum in range(x):
+            print("正在读取文件：" + str(fl) + "的第" + str(shnum) + "个sheet表的内容...")
+            rvalue = merger_excel.getFilect(fl, shnum)  # 定义最终合并后生成的新文件
+
+    for a in range(len(rvalue)):
+        for b in range(len(rvalue[a])):
+            c = rvalue[a][b]
+            ws.write(a, b, c)
+    wb1.close()
+
+
+    #rows.to_excel('D:/fixed_income/固定收益监控模板搭建0214（核对版） .xls', sheet_name=['aa'],encoding='gb2312')
+    '''
+    with pd.ExcelWriter('D:/fixed_income/固定收益监控模板搭建0214（核对版） .xls',mode='kw' ) as writer:
+        rows.to_excel(writer, 'Data 1')
+    
+    from openpyxl import load_workbook
+    excel_path = 'D:/fixed_income/固定收益监控模板搭建0214（核对版） .xls'
+    book = load_workbook(excel_path)
+    writer = pd.ExcelWriter(excel_path, engine='openpyxl')
+    writer.book = book
+    writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+    rows.to_excel(writer, "Main")
+    writer.save()
+    '''
+
 
 
