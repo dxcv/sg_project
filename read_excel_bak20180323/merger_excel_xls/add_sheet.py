@@ -84,18 +84,22 @@ def write_file_valuse(allxls,endxls):
 
 
 def merger_file(from_execls,to_excles):
-
-    # 定义一个目标excel
-    endxls = xlsxwriter.Workbook(to_excles)
-    write_file_valuse(from_execls,endxls)
-    endxls.close()
-
+    from xlrd import open_workbook
+    from xlutils.copy import copy
+    rb = open_workbook(to_excles)
+    # 通过sheet_by_index()获取的sheet没有write()方法
+    rs = rb.sheet_by_index(0)
+    wb = copy(rb)
+    # 通过get_sheet()获取的sheet有write()方法
+    ws = wb.get_sheet(0)
+    write_file_valuse(from_execls, ws)
+    #ws.write(0, 0, 'changed!')
+    wb.save(to_excles)
 
 if __name__ == '__main__':
 
     # 待合并excel
-    allxls = ["D:\\python_scripts\\sg_project\\read_excel\\excel\\compare_r.xls",
-              "D:\\python_scripts\\sg_project\\read_excel\\excel\\compare_result.xls"]
+    allxls = ["D:\\python_scripts\\sg_project\\read_excel\\excel\\compare_result.xls"]
     # 目标excel
     end_xls = "D:\\python_scripts\\sg_project\\read_excel\\excel\\final_excel.xls"
     merger_file(allxls,end_xls)
